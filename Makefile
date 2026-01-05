@@ -1,0 +1,94 @@
+# === Project Configuration ===
+PROJECT_NAME := UPL-x86
+TARGET       := i686-elf
+BUILD_DIR    := build
+ISO_DIR      := iso
+SRC_DIR      := src
+
+GRUBTHEME	:= grubtheme
+
+CC := $(TARGET)-gcc
+AS := nasm
+LD := $(TARGET)-ld
+OBJCOPY := $(TARGET)-objcopy
+NM := $(TARGET)-nm
+
+INCLUDES := -Isrc/include -Isrc/include/kernel -Isrc/include/lib -Isrc/arch/i686/include
+CFLAGS := -ffreestanding -O2 -Wall -Wextra -std=gnu99  $(INCLUDES)
+LDFLAGS := -T linker.ld -nostdlib
+
+# === Source and Object Discovery ===
+C_SOURCES   := $(shell find $(SRC_DIR) -type f -name '*.c')
+ASM_SOURCES := $(shell find $(SRC_DIR) -type f -name '*.asm')
+
+# symbol.c will be generated, so add it as a source
+GEN_C := $(BUILD_DIR)/symbol.c
+GEN_OBJ := $(GEN_C:.c=.o)
+
+OBJ := $(C_SOURCES:$(SRC_DIR)/%.c=$(BUILD_DIR)/%.o) \
+       $(ASM_SOURCES:$(SRC_DIR)/%.asm=$(BUILD_DIR)/%.o)
+
+# === Default Target ===
+all: $(PROJECT_NAME).iso
+
+# === Compilation Rules ===
+$(BUILD_DIR)/%.o: $(SRC_DIR)/%.c
+	@mkdir -p $(@D)
+	$(CC) $(CFLAGS) -c $< -o $@
+
+$(BUILD_DIR)/%.o: $(SRC_DIR)/%.asm
+	@mkdir -p $(@D)
+	$(AS) -f elf32 $< -o $@
+
+# Compile generated symbol.c
+$(BUILD_DIR)/symbol.o: $(BUILD_DIR)/symbol.c
+	$(CC) $(CFLAGS) -c $< -o $@
+
+
+# === First-pass linking ===
+# Produce preliminary kernel.elf without symbol table
+kernel_pass1.elf: $(OBJ)
+	$(LD) $(LDFLAGS) -o $@ $(OBJ)
+
+
+# === Symbol generation ===
+# Use nm output to generate symbol.c
+$(BUILD_DIR)/symbol.c: kernel_pass1.elf
+	@mkdir -p $(BUILD_DIR)
+	@echo "Generating symbol table..."
+	@echo '#include "symbols.h"' > $@
+	@echo 'symbol_t kernel_symbols[] = {' >> $@
+	@$(NM) --defined-only $< | \
+		awk '/ [Tt] / { printf("    {0x%s, \"%s\"},\n", $$1, $$3); }' >> $@
+	@echo '};' >> $@
+	@echo 'int kernel_symbol_count = sizeof(kernel_symbols) / sizeof(kernel_symbols[0]);' >> $@
+
+
+# === Final linking with symbols included ===
+kernel.elf: $(OBJ) $(GEN_OBJ)
+	$(LD) $(LDFLAGS) -o $@ $(OBJ) $(GEN_OBJ)
+
+kernel.bin: kernel.elf
+	$(OBJCOPY) -O binary $< $@
+
+
+# === ISO Creation ===
+$(PROJECT_NAME).iso: kernel.elf
+	@mkdir -p $(ISO_DIR)/boot/grub
+	cp kernel.elf $(ISO_DIR)/boot/kernel.elf
+	echo 'set timeout=5' > $(ISO_DIR)/boot/grub/grub.cfg
+	echo 'set default=0' >> $(ISO_DIR)/boot/grub/grub.cfg
+	echo 'set terminal_output console' >> $(ISO_DIR)/boot/grub/grub.cfg
+	echo 'set theme="./home/admin/Documents/Fontys/OSDev/project/grubtheme/theme.txt"' >> $(ISO_DIR)/boot/grub/grub.cfg
+	echo 'menuentry "$(PROJECT_NAME)" { multiboot /boot/kernel.elf }' >> $(ISO_DIR)/boot/grub/grub.cfg
+	echo 'menuentry "$(PROJECT_NAME) (VM compatibility)" { multiboot /boot/kernel.elf mode=vm}' >> $(ISO_DIR)/boot/grub/grub.cfg
+	echo 'menuentry "$(PROJECT_NAME) (safe mode)" { multiboot /boot/kernel.elf mode=safe }' >> $(ISO_DIR)/boot/grub/grub.cfg
+	echo 'menuentry "$(PROJECT_NAME) (safe mode, VM compatibility)" { multiboot /boot/kernel.elf mode=safe mode=vm }' >> $(ISO_DIR)/boot/grub/grub.cfg
+	echo 'menuentry "$(PROJECT_NAME) (debug mode)" { multiboot /boot/kernel.elf mode=debug level=3 }' >> $(ISO_DIR)/boot/grub/grub.cfg
+	grub-mkrescue -o $@ $(ISO_DIR)
+
+# === Cleanup ===
+clean:
+	rm -rf $(BUILD_DIR) kernel.elf kernel.bin kernel_pass1.elf $(ISO_DIR) $(PROJECT_NAME).iso
+
+.PHONY: all clean
