@@ -26,12 +26,10 @@ void init_wm(){
 }
 
 uint16_t make_cell(char c, uint8_t attr) {
-    // create character value based on attr
     return ((uint8_t)attr << 8) | (uint8_t)c;
 }
 
 void window_put_char(Window* win, uint8_t x, uint8_t y, char c, uint8_t attr) {
-    // put char into a window's framebuffer
     if (x < 0 || y < 0 || x >= win->w || y >= win->h){
         return; }
 
@@ -55,7 +53,6 @@ Window* get_window_from_id(uint32_t ID){
 
 
 void framebuffer_clear(uint16_t* framebuffer, uint8_t w, uint8_t h, enum VGA_COLOR attr) {
-    // set all framebuffer character values to c
     uint16_t background = make_cell(' ', attr);
     for (int i = 0; i < w * h; ++i) framebuffer[i] = background;
 }
@@ -151,7 +148,6 @@ int wm_api_inc_window_pos(uint8_t DeltaX, uint8_t DeltaY, bool IsNegative, uint3
 
     int resp = 0;
     resp = send_process_message(wm_pid, &select_window_message);
-   // do{} while (resp!=1);
 
     return resp;
 }
@@ -211,7 +207,6 @@ void wm_api_remove_window(uint32_t window){
 }
 
 void draw_window(Window* window, uint8_t FG, uint8_t BG, bool border){
-    // draw window to window's framebuffer
 
     int cursor_X = 0;
     int cursor_Y = 0;
@@ -270,35 +265,28 @@ void draw_window(Window* window, uint8_t FG, uint8_t BG, bool border){
             
             window_put_string(window, title, cursor_X, cursor_Y, title_attr);
             cursor_X+=TitleLength;
-            //framebuff_putstring(title,  cursor_X, cursor_Y, framebuffer, ATTRIBUTES);
+            
         }else{
             for(int x=0; x<WindowWidth-4; x++){
                 window_put_char(window, cursor_X, cursor_Y, title[x], title_attr);
                 cursor_X++;
-            // framebuffer_putc(title[x], cursor_X, cursor_Y, framebuffer, ATTRIBUTES);
             }
         }
         
         if(TitleLength>WindowWidth-2){
-            //replace last 2 with dots
             cursor_X = WinPosX+WindowWidth-4; cursor_Y = 0;
             window_put_string(window, "..", cursor_X, cursor_Y, title_attr);
-        // framebuff_putstring("..", cursor_X, cursor_Y, framebuffer, ATTRIBUTES);
         }
 
-        
-        //titleholder right
         window_put_char(window, cursor_X, 0, 0xC6, ATTRIBUTES);
     }
 }
 
 void select_window(int index) {
-    // set window's z value to the highest
     Window* win = get_window_from_id(index);
     if (index >= 0 && index < windowCount && win->canbesel == true) {
         windowlist[index].z = windowCount;
 
-        // Optionally, lower the z-values of other windows
         for (int i = 0; i < windowCount; i++) {
             if (i != index && windowlist[i].z >= windowlist[index].z) {
                 windowlist[i].z--;
@@ -320,7 +308,7 @@ Window* get_window_from_index(uint32_t index){
     return window;
 }
 
-// create a new window entry in the window list for compositor
+
 uint32_t make_window( enum VGA_COLOR FG, enum VGA_COLOR BG, uint8_t w, uint8_t h, uint8_t x, uint8_t y, bool border, bool canbesel, char *title){
 
     if (windowCount >= 10){return 0;}
@@ -359,9 +347,7 @@ void blit_window_to_wm(Window *win, uint16_t *wm_buffer) {
     int base_x = win->posx;
     int base_y = win->posy;
 
-    
 
-    // basic sanity
     if (w <= 0 || h <= 0) return;
 
     for (int wy = 0; wy < h; ++wy) {
@@ -373,12 +359,8 @@ void blit_window_to_wm(Window *win, uint16_t *wm_buffer) {
             if (sx < 0 || sx >= GRID_WITDH) continue; // horizontal clip
 
             size_t src_idx = (size_t)wy * (size_t)w + (size_t)wx;
-            // defensive: ensure src_idx is within allocated window cells
-            // (if you tracked allocation size you can check here)
-
             uint16_t cell = win->framebuffer[src_idx];
 
-            // treat zero as transparent (optional)
             if (cell == 0x0000) continue;
 
             wm_buffer[(size_t)sy * GRID_WITDH + (size_t)sx] = cell;
@@ -386,15 +368,12 @@ void blit_window_to_wm(Window *win, uint16_t *wm_buffer) {
     }
 }
 
-//TODO: rewrite compositor to only draw necciscary stuff
+//TODO: compositor opnieuw schrijven om alleen benodigde veranderingen te tekenen
 void draw_gui_framebuffer(){
     
     if(windowCount==0){return;}
-    
-    // clear wm framebuffer
     framebuffer_clear(wm_buffer, GRID_WITDH, GRID_HEIGHT, 0x0F);
     
-    // sort windows based on Z value
     for (int i = 0; i < windowCount; i++) {
         for (int j = 0; j < windowCount - i - 1; j++) {
             if (windowlist[j].z > windowlist[j + 1].z) {
@@ -404,14 +383,13 @@ void draw_gui_framebuffer(){
             }
         }
     }
-    // push each window framebuffer to wm buffer one by one
+    
     for (int z = 0; z < windowCount; z++) {
         Window* CurWindow = &windowlist[z];
         blit_window_to_wm(CurWindow, wm_buffer);
 
     }
 
-    // push wm buffer to vga
     vga_push_framebuffer(wm_buffer);
 
     
@@ -609,7 +587,6 @@ void wm_loop(){
         
         message_t msg;
         if(receive_process_message(&msg)){
-            // handle message
             handle_process_message(&msg);
         }
 

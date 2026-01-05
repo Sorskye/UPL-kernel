@@ -124,7 +124,6 @@ void puthex64(unsigned long long v, int width) {
     for (int s = 60; s >= 0; s -= 4)
         buf[i++] = hex[(v >> s) & 0xF];
 
-    // Skip leading zeros unless width forces them
     int start = 0;
     while (start < 15 && buf[start] == '0')
         start++;

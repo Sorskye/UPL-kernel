@@ -102,7 +102,7 @@ void send_eoi(uint8_t irq)
 }
 
 void IRQ_common_Handler(panic_registers *regs) {
-    current_irq_name = irqMessages[regs->errCode]; // errCode is IRQ number
+    current_irq_name = irqMessages[regs->errCode]; // errCode is IRQ nummer
 
     switch (regs->errCode)
     {
@@ -111,7 +111,6 @@ void IRQ_common_Handler(panic_registers *regs) {
     case 1:
         keyboard_irq();
         break;
-       // panic(regs);
     default:
         break;
     }
@@ -171,8 +170,7 @@ bool IDT_install(){
     IDT_SET_GATE(29, isr29);
     IDT_SET_GATE(30, isr30);
     IDT_SET_GATE(31, isr31);
-
-    // remap PIC to avoid overlap between isr and irq
+    // PIC remap om overlap tussen ISR en IRQ te voorkomen
     outb(0x20, 0x11);
     outb(0xA0, 0x11);
     outb(0x21, 0x20);

@@ -18,7 +18,7 @@ struct memory_entry memory_entries[MAX_MEM_ENTRIES];
 static memory_block_t* free_block_list = NULL;
 uint32_t entries = 0;
 
-// helpers for sizes and flags
+// helpers
 static inline uint32_t block_size(memory_block_t* b) {
     return b->len & ~USED_FLAG;
 }
@@ -64,21 +64,21 @@ void init_allocator(struct memory_entry* entries, int entry_count) {
         uint32_t end   = entries[i].addr + entries[i].len;
 
         if (end <= 0x00100000U) {
-            // below 1mb
+            // onder 1mb
             continue;
         }
         if (start < 0x00100000U) start = 0x00100000U;
 
-        // Clip out kernel region
+        // buiten kernel
         if (end <= kstart || start >= kend) {
-            // no overlap, safe
+            // veilig
             add_block(start, end - start, i);
         } else {
-            // overlap: left side
+            // overlap links
             if (start < kstart) {
                 add_block(start, kstart - start, i);
             }
-            // right side
+            // rechts
             if (end > kend) {
                 add_block(kend, end - kend, i);
             }
@@ -107,7 +107,7 @@ void parse_memory_map(struct multiboot_info* mbinfo){
             uint64_t len64  = entry->len;
 
             if (addr64 > 0xFFFFFFFFULL) {
-                // ram is more than 4GB
+                // meer dan 4GB ram
                 ptr += entry->size + sizeof(entry->size);
                 continue;
             }
@@ -157,15 +157,13 @@ void debug_block_info(void *user_ptr) {
     }
     memory_block_t *blk = (memory_block_t*)((uint8_t*)user_ptr - sizeof(memory_block_t));
     uint32_t len_field = blk->len;
-    uint32_t blocklen = block_size(blk);      // use your function
-    int used = block_used(blk);               // or !block_used
-   // printf("debug_block_info: user_ptr=%016x header=%016x len_field=0x%08x block_size=%u used=%d next=%08x\n",
-  //  user_ptr, blk, len_field, blocklen, used, blk->next);
+    uint32_t blocklen = block_size(blk); 
+    int used = block_used(blk); 
     vga_refresh();
     halt();
 }
 
-// TODO: find & fix malloc/block-list bugs
+// TODO: malloc/block list bugs fixen
 void* malloc(uint32_t size) {
     if (size == 0) return NULL;
 
@@ -201,16 +199,13 @@ void* malloc(uint32_t size) {
     return (void*)((uint8_t*)block + sizeof(memory_block_t));
 }
 
-// TODO: look for block-list bugs
+// TODO: block list bugs zoeken
 void free(void* ptr) {
     if (!ptr) return;
-
-    // find block metadata from user pointer
     memory_block_t* block = (memory_block_t*)((uint8_t*)ptr - sizeof(memory_block_t));
 
-    // sanity check: if already free, ignore (or you may want to assert)
     if (!block_used(block)) {
-        // double free or corrupted pointer; ignore or log
+       
         printf("WARNING: double free or invalid pointer at %p\n", ptr);
         asm("cli");
         vga_refresh();
@@ -218,10 +213,8 @@ void free(void* ptr) {
         return;
     }
 
-    // mark free
     mark_free(block);
 
-    // insert into free list sorted by address (helps coalescing)
     memory_block_t* prev = NULL;
     memory_block_t* cur = free_block_list;
     while (cur && cur < block) {
@@ -229,12 +222,10 @@ void free(void* ptr) {
         cur = cur->next;
     }
 
-    // insert between prev and cur
     block->next = cur;
     if (prev) prev->next = block;
     else free_block_list = block;
 
-    // try to coalesce with next
     if (block->next && !block_used(block->next)) {
     uint8_t* block_end = (uint8_t*)block + block_size(block);
     if (block_end == (uint8_t*)block->next) {
@@ -243,8 +234,6 @@ void free(void* ptr) {
         block->next = block->next->next;
     }
 }
-
-    // try to coalesce with prev
     if (prev && !block_used(prev)) {
     uint8_t* prev_end = (uint8_t*)prev + block_size(prev);
     if (prev_end == (uint8_t*)block) {
@@ -256,7 +245,6 @@ void free(void* ptr) {
 }
 
 
-// TODO: add more functionality for specific scenarios
 void* memcpy(void* dest, const void* src, size_t n)
 {
     unsigned char* d = dest;

@@ -1,7 +1,7 @@
 section .multiboot
 align 4
     MULTIBOOT_MAGIC      equ 0x1BADB002
-    MULTIBOOT_FLAGS      equ (1 << 0) | (1 << 1)    ; no memory map, no video mode, simple setup
+    MULTIBOOT_FLAGS      equ (1 << 0) | (1 << 1)   
     MULTIBOOT_CHECKSUM   equ -(MULTIBOOT_MAGIC + MULTIBOOT_FLAGS)
 
     dd MULTIBOOT_MAGIC
@@ -23,7 +23,7 @@ gdt_flush:
     jmp 0x08:flush_cs_reload
 
 flush_cs_reload:
-    mov ax, 0x10 ; 0x10 = gdt index 2 (kernel data)
+    mov ax, 0x10
     mov ds, ax
     mov es, ax
     mov fs, ax
@@ -34,14 +34,14 @@ flush_cs_reload:
 global _start
 _start:
     mov esp, stack_top
-    push ebx        ; multibooot memory map pointer
-    push eax        ; magic number
+    push ebx
+    push eax
 
     mov eax, 1
     cpuid
     test edx, (1<<25)
     jz no_sse
-    ;SSE is available
+    ;SSE is beschikbaar
    
     call kernel_main
 

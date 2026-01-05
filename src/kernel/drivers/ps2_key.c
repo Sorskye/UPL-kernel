@@ -54,27 +54,23 @@ void keyboard_subscribe(task_t* task){
 
 char translate_scancode(uint8_t sc)
 {
-    /* Handle key releases */
     if (sc & 0x80) {
         uint8_t code = sc & 0x7F;
 
         if (code == SC_LSHIFT_PRESS || code == SC_RSHIFT_PRESS)
             shift = false;
 
-        return 0;   // no ASCII
+        return 0;
     }
 
-    /* Handle shift presses */
     if (sc == SC_LSHIFT_PRESS || sc == SC_RSHIFT_PRESS) {
         shift = true;
         return 0;
     }
 
-    /* Bounds check */
     if (sc > 127)
         return 0;
 
-    /* Lookup tables */
     if (shift)
         return scancode_to_ascii_shift[sc];
     else
@@ -89,8 +85,6 @@ void keyboard_worker(uint32_t pid_sender) {
     while (true){
         uint8_t sc;
         while (kb_ring_get(&sc)) {
-            // Build message
-            // Loop through subscribers
             kb_subscriber_t *sub = kb_subscribers;
             while (sub) {
                 if (sub->task) {

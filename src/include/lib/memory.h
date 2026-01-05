@@ -32,8 +32,8 @@ struct memory_entry{
 };
 
 typedef struct memory_block {
-    uint32_t len;                // total block size INCLUDING this header; LSB used as "used" flag
-    struct memory_block* next;   // valid only when block is free (i.e. used bit == 0)
+    uint32_t len;
+    struct memory_block* next;
 } memory_block_t;
 
 
@@ -43,7 +43,7 @@ typedef struct mem_inf{
     uint32_t entries;
 } mem_inf_t;
 
-mem_inf_t* get_mem_inf(); //block list, max mem
+mem_inf_t* get_mem_inf();
 
 void parse_memory_map(struct multiboot_info* mbinfo);
 void* malloc(uint32_t size);

@@ -38,7 +38,7 @@ typedef struct task {
     char taskname[24];
     struct task* next;
 
-    //IPC
+    // IPC
     message_t queue[MSG_QUEUE_SIZE];
     int queue_head;
     int queue_tail;

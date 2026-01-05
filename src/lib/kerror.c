@@ -17,7 +17,6 @@ const char* lookup_symbol(uint32_t addr) {
     for (int i = 0; i < kernel_symbol_count; i++) {
         uint32_t sym = kernel_symbols[i].addr;
 
-        // Find the symbol with the highest address that is still <= addr
         if (sym <= addr && sym >= best) {
             best = sym;
             result = kernel_symbols[i].name;
@@ -37,18 +36,15 @@ void print_stack_trace(panic_registers *regs) {
     printf(" -> %08x : %s\n", eip, lookup_symbol(eip));
 
     int frame_count = 0;
-    while (ebp && frame_count < 32) { // limit frames to avoid infinite loop
+    while (ebp && frame_count < 32) {
         uint32_t ret = ebp[0];
-
-        // sanity check return address
 
         printf(" -> %08x : %s\n", ret, lookup_symbol(ret));
 
         uint32_t *next_ebp = (uint32_t*)ebp[0];
 
-        // sanity check next EBP
         if (next_ebp <= ebp) 
-            break;  // prevent loops or stack underflow
+            break;
 
         ebp = next_ebp;
         frame_count++;

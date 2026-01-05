@@ -50,27 +50,27 @@ void vga_enable_blink() {
     // Reset attribute controller flip-flop
     (void)inb(0x3DA);
 
-    // Select register 0x10
+    // Selecteer register 0x10
     outb(0x3C0, 0x10);
 
-    // Read current value
+    // lees huidige waarde
     uint8_t val = inb(0x3C1);
 
-    // Enable blink (set bit 3), disable bright-background mode (clear bit 5)
-    val |= 0x08;   // set blink enable
-    val &= ~0x20;  // clear bright background
+    // zet knipper
+    val |= 0x08; 
+    val &= ~0x20;
 
-    // Reset flip-flop again
+    // Reset flip-flop
     (void)inb(0x3DA);
 
-    // Write modified value back
+    // schrijf waarde
     outb(0x3C0, val);
 }
 
 static inline void vga_load_default_palette() {
-    outb(0x00, 0x3C8); // start at color index 0
+    outb(0x00, 0x3C8);
     for (int i = 0; i < 16; i++) {
-        outb(vga_default_palette[i][0] >> 2, 0x3C9); // VGA DAC is 6-bit per channel
+        outb(vga_default_palette[i][0] >> 2, 0x3C9);
         outb(vga_default_palette[i][1] >> 2, 0x3C9);
         outb(vga_default_palette[i][2] >> 2, 0x3C9);
     }
@@ -78,16 +78,10 @@ static inline void vga_load_default_palette() {
 
 void vga_init(){
     vga_framebuffer = alloc_framebuffer();
-    
-    //vga_enable_blink();
-  
-   // vga_disable_blink();
     vga_load_default_palette();
 }
 
 // framebuffer ops
-
-
 uint8_t vga_make_attr_blink(enum VGA_COLOR FG, enum VGA_COLOR BG, bool blink){
     uint8_t attr = (uint8_t)(FG | (BG & 0x7) << 4);
     if(blink){
@@ -192,4 +186,6 @@ void vga_clear(){
 
     cursor_x = 0;
     cursor_y = 0;
-}
+}    //vga_enable_blink();
+  
+   // vga_disable_blink();

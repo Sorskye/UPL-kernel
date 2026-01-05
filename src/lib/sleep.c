@@ -8,7 +8,7 @@ static inline uint32_t ms_to_ticks(uint32_t ms) {
     return (ms * PIT_FREQUENCY + 999) / 1000;
 }
 
-void schedule_switch(void); // implemented in asm below
+void schedule_switch(void); // in assembly
 
 void sleep_ms(uint32_t ms) {
     

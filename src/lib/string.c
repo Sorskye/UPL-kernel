@@ -101,7 +101,6 @@ static char *write_str(char *out, const char *s) {
     return out;
 }
 
-/* --- main format function --- */
 
 char *strconcat(char *out, const char *fmt, ...) {
     char *start = out;
@@ -116,7 +115,6 @@ char *strconcat(char *out, const char *fmt, ...) {
 
         i++;
 
-        /* width: %0NNN */
         int width = 0;
         if (fmt[i] == '0') {
             i++;
@@ -126,7 +124,6 @@ char *strconcat(char *out, const char *fmt, ...) {
             }
         }
 
-        /* %ll */
         int is_ll = 0;
         if (fmt[i] == 'l' && fmt[i+1] == 'l') {
             is_ll = 1;

@@ -39,7 +39,7 @@ void kernel_main(uint32_t magic, struct multiboot_info* mbinfo) {
     const char* cmdline = (const char*) mbinfo->cmdline;
 
     if (cmdline) {
-    // Example parsing
+    // OS modus voorbeeld
     if (strstr(cmdline, "mode=safe")) {
        SAFE_MODE = true;
     }
@@ -67,7 +67,7 @@ void kernel_main(uint32_t magic, struct multiboot_info* mbinfo) {
     console_color(VGA_WHITE, VGA_BLACK);
     clear();
 
-    // TODO: check multiboot checksum in parse_memory_map()
+    // TODO: multiboot checksum controleren in parse_memory_map()
 
     GDT_install();
     IDT_install();
@@ -208,8 +208,6 @@ void kernel_main(uint32_t magic, struct multiboot_info* mbinfo) {
             keyboardbuffer = malloc(maxbuffersize);
         }
 
-        //int selwin = wm_api_get_selected_window();
-
         void handle_process_message(message_t* msg){
             if (msg->type == PS2_NEW_INPUT ){
                 uint8_t scanline = (msg->arg0 >> 24) & 0xFF;
@@ -270,7 +268,6 @@ void kernel_main(uint32_t magic, struct multiboot_info* mbinfo) {
         int info_app = create_task((void*)info_task, "safemode info", 0);
         
     }
-    //asm ("div %b0" :: "a"(0));
     start_multitasking();
     
 

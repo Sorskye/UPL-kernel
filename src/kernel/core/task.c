@@ -7,7 +7,7 @@
 #include "string.h"
 #include "GDT.h"
 
-// extern assembly routine
+// externe asm routine
 extern void context_switch(uint32_t **old_sp_ptr, uint32_t *new_sp);
 
 task_t task_table[MAX_TASKS];
@@ -28,7 +28,6 @@ task_t* PID_to_task(uint32_t PID){
 int send_process_message(uint32_t pid_to, message_t* msg){
     asm volatile("cli");
 
-    // get task to send to
     task_t* task_to = NULL;
     for (int i = 0; i < MAX_TASKS; i++) {
         if (task_table[i].pid == pid_to) {
@@ -38,20 +37,17 @@ int send_process_message(uint32_t pid_to, message_t* msg){
     }
 
     if (!task_to) {
-        // pid not found
         asm volatile("sti");
         return -1; 
     }
 
     if (task_to->queue_full==1) {
-        // queue full
         asm volatile("sti");
         return -2; 
     }
 
     msg->PID_SENDER = current_task->pid;
 
-    // append to queue tail
     task_to->queue[task_to->queue_tail] = *msg;
     task_to->queue_tail = (task_to->queue_tail + 1) % MSG_QUEUE_SIZE;
 
@@ -139,7 +135,7 @@ int create_task(task_fn fn,char* name, void *arg) {
 
     uint32_t *sp = (uint32_t*)((uintptr_t)t->stack + KERNEL_STACK_SIZE);
 
-    // set interrupt stack frame for interrupt return, after timer interrupt
+    // stackframe opzetten
     *(--sp) = INITIAL_EFLAGS;   // eflags
     *(--sp) = KERNEL_CODE_SELECTOR;  // cs
     *(--sp) = (uint32_t)fn;     // eip (entry point of the task)
@@ -148,7 +144,7 @@ int create_task(task_fn fn,char* name, void *arg) {
     *(--sp) = 0x0; // ecx
     *(--sp) = 0x0; // edx
     *(--sp) = 0x0; // ebx
-    *(--sp) = 0x0; // esp (placeholder)
+    *(--sp) = 0x0; // esp
     *(--sp) = 0x0; // ebp
     *(--sp) = (uint32_t) arg; // esi (arg)
     *(--sp) = 0x0; // edi
@@ -165,8 +161,6 @@ int create_task(task_fn fn,char* name, void *arg) {
         t->next = task_head;
     }
 
-
-    // clear message queue
     t->queue_head = 0;
     t->queue_tail = 0;
     t->queue_full = false;

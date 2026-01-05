@@ -62,7 +62,7 @@ int vga_get_cursor();
 extern volatile uint8_t cursor_x, cursor_y;
 extern const uint8_t GRID_WITDH, GRID_HEIGHT;
 
-// extern vga framebuffers
+
 uint16_t* alloc_framebuffer();
 uint8_t vga_make_attr_blink(enum VGA_COLOR FG, enum VGA_COLOR BG, bool blink);
 uint8_t vga_make_attr(enum VGA_COLOR FG, enum VGA_COLOR BG, bool blink);
