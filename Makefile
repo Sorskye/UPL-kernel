@@ -79,7 +79,6 @@ $(PROJECT_NAME).iso: kernel.elf
 	echo 'set timeout=5' > $(ISO_DIR)/boot/grub/grub.cfg
 	echo 'set default=0' >> $(ISO_DIR)/boot/grub/grub.cfg
 	echo 'set terminal_output console' >> $(ISO_DIR)/boot/grub/grub.cfg
-	echo 'set theme="./home/admin/Documents/Fontys/OSDev/project/grubtheme/theme.txt"' >> $(ISO_DIR)/boot/grub/grub.cfg
 	echo 'menuentry "$(PROJECT_NAME)" { multiboot /boot/kernel.elf }' >> $(ISO_DIR)/boot/grub/grub.cfg
 	echo 'menuentry "$(PROJECT_NAME) (VM compatibility)" { multiboot /boot/kernel.elf mode=vm}' >> $(ISO_DIR)/boot/grub/grub.cfg
 	echo 'menuentry "$(PROJECT_NAME) (safe mode)" { multiboot /boot/kernel.elf mode=safe }' >> $(ISO_DIR)/boot/grub/grub.cfg
